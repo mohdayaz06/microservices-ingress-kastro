@@ -50,7 +50,7 @@ pipeline {
             steps {
                 echo 'Configuring AWS CLI and kubectl...'
                 script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-creds']]) {
                         sh "aws configure set region ${AWS_REGION}"
                         sh "aws eks update-kubeconfig --region ${AWS_REGION} --name ${K8S_CLUSTER_NAME}"
                         sh "kubectl config current-context"
@@ -64,12 +64,19 @@ pipeline {
             steps {
                 echo 'Deploying application to Kubernetes...'
                 script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                        sh "sed -i 's|kastrov/techsolutions-app:latest|kastrov/techsolutions-app:${env.IMAGE_TAG}|g' k8s/deployment.yaml"
-                        sh "kubectl apply -f k8s/deployment.yaml"
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-creds']]) {
+                        // Replace :latest with the specific image tag in deployment.yaml
+                        sh "sed -i 's|:latest|:${env.IMAGE_TAG}|g' deployment.yaml"
+
+                        // Apply the updated deployment
+                        sh "kubectl apply -f deployment.yaml"
+
+                        // Check rollout status
                         sh "kubectl rollout status deployment/${APP_NAME}-deployment --timeout=300s"
-                        sh "kubectl get pods -l app=${APP_NAME}"
-                        sh "kubectl get svc ${APP_NAME}-service"
+
+                        // Show pod and service info
+                        sh "kubectl get pods -l app=${APP_NAME} -o wide"
+                        sh "kubectl get svc ${APP_NAME}-service -o wide"
                     }
                 }
             }
@@ -79,8 +86,8 @@ pipeline {
             steps {
                 echo 'Deploying Ingress resource...'
                 script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                        sh "kubectl apply -f k8s/ingress.yaml"
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-creds']]) {
+                        sh "kubectl apply -f ingress.yaml"
                         sleep(10)
                         sh "kubectl get ingress ${APP_NAME}-ingress"
                         sh "kubectl describe ingress ${APP_NAME}-ingress"
@@ -91,9 +98,9 @@ pipeline {
 
         stage('Get Ingress URL') {
             steps {
-                echo 'Getting Ingress URL...'
+                echo 'Fetching Ingress URL...'
                 script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-creds']]) {
                         timeout(time: 10, unit: 'MINUTES') {
                             waitUntil {
                                 script {
@@ -113,7 +120,7 @@ pipeline {
                         }
 
                         echo "========================================="
-                        echo "DEPLOYMENT SUCCESSFUL!"
+                        echo "✅ DEPLOYMENT SUCCESSFUL!"
                         echo "========================================="
                         echo "Application URL: ${env.INGRESS_URL}"
                         echo ""
@@ -124,6 +131,7 @@ pipeline {
                         echo "- Contact Page: ${env.INGRESS_URL}/contact"
                         echo "========================================="
 
+                        // Health checks
                         sh "curl -I ${env.INGRESS_URL}/ || echo 'Home page check failed'"
                         sh "curl -I ${env.INGRESS_URL}/about || echo 'About page check failed'"
                         sh "curl -I ${env.INGRESS_URL}/services || echo 'Services page check failed'"
@@ -136,7 +144,7 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up Docker images...'
+            echo 'Cleaning up local Docker images...'
             sh "docker rmi ${DOCKER_HUB_REPO}:${env.IMAGE_TAG} || true"
             sh "docker rmi ${DOCKER_HUB_REPO}:latest || true"
         }
@@ -147,7 +155,7 @@ pipeline {
         }
 
         failure {
-            echo 'Pipeline failed! Please check the logs.'
+            echo '❌ Pipeline failed! Please check the logs above.'
         }
     }
 }
