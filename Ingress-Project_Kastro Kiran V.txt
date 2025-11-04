@@ -168,8 +168,19 @@ sudo mv ./kubectl /usr/local/bin
 kubectl version --short --client
 
 4.6. Install EKS CTL (used to create EKS Cluster)
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl\_$(uname -s)\_amd64.tar.gz" | tar xz -C /tmp
+#!/bin/bash
+# Download and install eksctl
+
+# Download eksctl binary (latest release)
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" -o /tmp/eksctl.tar.gz
+
+# Extract the tarball
+tar -xzf /tmp/eksctl.tar.gz -C /tmp
+
+# Move eksctl to /usr/local/bin
 sudo mv /tmp/eksctl /usr/local/bin
+
+# Verify installation
 eksctl version
 
 4.7. Create EKS Cluster
@@ -496,3 +507,4 @@ TO GET ARGO CD PASSWORD:
 ------------------------------------------
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ----> Copy the password and provide in argo cd console ----> You will see the argo cd console ----> Follow as explained in the video
+
