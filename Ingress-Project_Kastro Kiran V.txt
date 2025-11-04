@@ -61,23 +61,29 @@ vi Jenkins.sh ----> Paste the below content ---->
 #!/bin/bash
 # Update system
 sudo apt update -y
+
 # Install dependencies
 sudo apt install -y fontconfig openjdk-17-jre-headless wget gnupg2
-# Download and add the Jenkins GPG key
-wget -O- https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | \\
-    gpg --dearmor | sudo tee /usr/share/keyrings/jenkins-keyring.gpg > /dev/null
-# Add Jenkins repository
-echo "deb \[signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/" | \\
-    sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+# Download and add Jenkins key
+wget -q -O - https://pkg.jenkins.io/debian/jenkins.io-2023.key | sudo gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg
+
+# Add Jenkins repository to sources list
+echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/" | \
+  sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+
 # Update package lists
 sudo apt update -y
+
 # Install Jenkins
 sudo apt install jenkins -y
-# Start Jenkins
-sudo systemctl start jenkins
+
+# Enable and start Jenkins
 sudo systemctl enable jenkins
-# Print status
-sudo systemctl status jenkins
+sudo systemctl start jenkins
+
+# Verify Jenkins service
+sudo systemctl status jenkins --no-pager
 
 ----> esc ----> :wq ----> sudo chmod +x jenkins.sh ----> ./jenkins.sh
 
@@ -496,3 +502,4 @@ TO GET ARGO CD PASSWORD:
 ------------------------------------------
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ----> Copy the password and provide in argo cd console ----> You will see the argo cd console ----> Follow as explained in the video
+
