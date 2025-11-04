@@ -152,9 +152,10 @@ Attach the below inline policy also for the same user
 With this we have created the IAM User with appropriate permissions to create the EKS Cluster
 
 4.4. Install AWS CLI (to interact with AWS Account)
-sudo apt update
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86\_64.zip" -o "awscliv2.zip"
-sudo apt install unzip
+#!/bin/bash
+sudo apt update -y
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo apt install -y unzip
 unzip awscliv2.zip
 sudo ./aws/install
 
@@ -496,3 +497,4 @@ TO GET ARGO CD PASSWORD:
 ------------------------------------------
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ----> Copy the password and provide in argo cd console ----> You will see the argo cd console ----> Follow as explained in the video
+
