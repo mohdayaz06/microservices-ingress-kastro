@@ -66,10 +66,11 @@ pipeline {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-creds']]) {
                         // Replace :latest with the specific image tag in deployment.yaml
-                        sh "sed -i 's|:latest|:${env.IMAGE_TAG}|g' deployment.yaml"
+                        sh "sed -i 's|:latest|:${env.IMAGE_TAG}|g' k8s/deployment.yaml"
 
                         // Apply the updated deployment
-                        sh "kubectl apply -f deployment.yaml"
+                        sh "kubectl apply -f k8s/deployment.yaml"
+
 
                         // Check rollout status
                         sh "kubectl rollout status deployment/${APP_NAME}-deployment --timeout=300s"
@@ -87,7 +88,7 @@ pipeline {
                 echo 'Deploying Ingress resource...'
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-creds']]) {
-                        sh "kubectl apply -f ingress.yaml"
+                        sh "kubectl apply -f k8s/ingress.yaml"
                         sleep(10)
                         sh "kubectl get ingress ${APP_NAME}-ingress"
                         sh "kubectl describe ingress ${APP_NAME}-ingress"
